@@ -1,0 +1,13 @@
+{
+    "python.formatting.provider": "none",
+    "editor.formatOnSave": true,
+    "python.formatting.blackArgs": [
+        "--skip-string-normalization",
+        "--line-length",
+        "79"
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "python.analysis.typeCheckingMode": "off",
+}
