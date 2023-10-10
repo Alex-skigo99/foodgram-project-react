@@ -4,7 +4,7 @@ from django.db import models
 User = get_user_model()
 
 
-class Subscribtion(models.Model):
+class Subscription(models.Model):
     """Подписка на автора."""
 
     follower = models.ForeignKey(

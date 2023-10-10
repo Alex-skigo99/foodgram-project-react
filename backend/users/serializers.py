@@ -6,7 +6,7 @@ from rest_framework.relations import SlugRelatedField, PrimaryKeyRelatedField
 from djoser.serializers import UserSerializer
 
 
-from .models import Subscribtion
+from .models import Subscription
 
 
 User = get_user_model()
@@ -53,21 +53,21 @@ class CustomUserCreateSerializer(UserSerializer):
         return data
 
 
-# class SubscribtionSerializer(CustomUserSerializer):
+# class SubscriptionSerializer(CustomUserSerializer):
 
 
-# class SubscribtionSerializer(serializers.ModelSerializer):
+# class SubscriptionSerializer(serializers.ModelSerializer):
 #     follower = serializers.StringRelatedField(
 #         read_only=True, default=serializers.CurrentUserDefault()
 #     )
 
 #     class Meta:
-#         model = Subscribtion
+#         model = Subscription
 #         fields = ("follower", "following")
 
 #         validators = [
 #             serializers.UniqueTogetherValidator(
-#                 queryset=Subscribtion.objects.all(),
+#                 queryset=Subscription.objects.all(),
 #                 fields=("follower", "following"),
 #                 message="Вы уже подписаны на этого автора.",
 #             )
