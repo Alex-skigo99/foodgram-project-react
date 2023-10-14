@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from recipes.views import RecipesViewSet, IngredientsViewSet, TagsViewSet
 
 router = DefaultRouter()
-router.register("recipes", RecipesViewSet)
+router.register("recipes", RecipesViewSet, "recipes")
 router.register("ingredients", IngredientsViewSet)
 router.register("tags", TagsViewSet)
 # router.register(

@@ -1,32 +1,64 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Exists, OuterRef
+from distutils.util import strtobool
 
 # from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters  # , generics, permissions
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import (
+    DjangoFilterBackend,
+    AllValuesMultipleFilter,
+    FilterSet,
+    NumberFilter,
+    TypedChoiceFilter,
+    ModelMultipleChoiceFilter,
+)
 
 from .models import Recipe, Ingredient, Tag
 from .serializers import RecipeSerializer, IngredientSerializer, TagSerializer
 
 User = get_user_model()
 
+BOOLEAN_CHOICES = (
+    (0, "False"),
+    (1, "True"),
+)
+
+
+class RecipeFilter(FilterSet):
+    tags = AllValuesMultipleFilter(field_name="tags__slug")
+    author = NumberFilter(lookup_expr="id__exact")
+    is_favorited = TypedChoiceFilter(
+        field_name="is_fav", choices=BOOLEAN_CHOICES, coerce=strtobool
+    )
+    is_in_shopping_cart = TypedChoiceFilter(
+        field_name="is_in_cart", choices=BOOLEAN_CHOICES, coerce=strtobool
+    )
+
+    class Meta:
+        model = Recipe
+        fields = []
+
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.select_related("author")
     serializer_class = RecipeSerializer
     # permission_classes = (OwnerOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
-    filterset_fields = ("name", "author", "tags__slug")
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    # def get_queryset(self):
-    #     queryset = self.queryset
-    #     if self.request.query_params.get("is_favorited"):
-    #         queryset = self.request.user.fav_recipes
-    #     if self.request.query_params.get("is_in_shopping_cart"):
-    #         queryset = queryset.filter(shop_users=self.request.user)
-    #     return queryset
+    def get_queryset(self):
+        """Add fields is_fav & is_in_cart for authenticated"""
+        user = self.request.user
+        queryset = Recipe.objects.select_related("author").prefetch_related(
+            "ingredients", "tags"
+        )
+        if user.is_authenticated:
+            queryset = queryset.annotate(
+                is_fav=Exists(user.fav_recipe.filter(pk=OuterRef("pk")))
+            ).annotate(is_in_cart=Exists(user.shop_recipe.filter(pk=OuterRef("pk"))))
+        return queryset
 
     # def get_permissions(self):
     #     if self.action == "retrieve":

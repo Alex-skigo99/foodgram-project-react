@@ -5,10 +5,9 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-# from rest_framework.relations import SlugRelatedField
 
+from .models import Recipe, Ingredient, Tag, IngredientsApplied
 
-from .models import Recipe, Ingredient, Tag, IngredientsApplied, Favorite, Shopping_cart
 from users.serializers import CustomUserSerializer
 
 User = get_user_model()
@@ -51,11 +50,10 @@ class TagSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     author = CustomUserSerializer(read_only=True)
-    ingredients = IngredientAppliedSerializer(many=True, source="ing_recipes")
+    ingredients = IngredientAppliedSerializer(many=True, source="ings_recipe")
     tags = TagSerializer(read_only=True, many=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
-    # is_favorited = IsFavoritedField(read_only=True)
     # image = Base64ImageField(required=False, allow_null=True)
     # image_url = serializers.SerializerMethodField(
     #     "get_image_url",
@@ -84,8 +82,12 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context["request"].user
-        return Favorite.objects.filter(user=user, recipe=obj).exists()
+        if user.is_authenticated:
+            return obj.is_fav
+        return False
 
     def get_is_in_shopping_cart(self, obj):
         user = self.context["request"].user
-        return Shopping_cart.objects.filter(user=user, recipe=obj).exists()
+        if user.is_authenticated:
+            return obj.is_in_cart
+        return False

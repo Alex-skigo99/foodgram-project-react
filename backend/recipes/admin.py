@@ -5,8 +5,6 @@ from .models import (
     IngredientsApplied,
     Tag,
     TagsApplied,
-    Favorite,
-    Shopping_cart,
 )
 
 
@@ -45,8 +43,10 @@ class RecipeAdmin(admin.ModelAdmin):
 
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngAdmin)
-admin.site.register(IngredientsApplied, IngAppliedAdmin)
+# admin.site.register(IngredientsApplied, IngAppliedAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(TagsApplied, TagAppliedAdmin)
-admin.site.register(Favorite)
-admin.site.register(Shopping_cart)
+# admin.site.register(TagsApplied, TagAppliedAdmin)
+admin.site.register(Recipe.is_favorited.through)
+admin.site.register(Recipe.is_in_shopping_cart.through)
+admin.site.register(Recipe.ingredients.through)
+admin.site.register(Recipe.tags.through)
