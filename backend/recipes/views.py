@@ -14,7 +14,13 @@ from django_filters.rest_framework import (
 )
 
 from .models import Recipe, Ingredient, Tag
-from .serializers import RecipeSerializer, IngredientSerializer, TagSerializer
+from .permissions import OwnerOrReadOnly
+from .serializers import (
+    RecipeSerializer,
+    IngredientSerializer,
+    TagSerializer,
+    AddRecipeSerializer,
+)
 
 User = get_user_model()
 
@@ -40,13 +46,9 @@ class RecipeFilter(FilterSet):
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeSerializer
-    # permission_classes = (OwnerOrReadOnly,)
+    permission_classes = (OwnerOrReadOnly,)
     filter_backends = (filters.SearchFilter, DjangoFilterBackend)
     filterset_class = RecipeFilter
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
 
     def get_queryset(self):
         """Add fields is_fav & is_in_cart for authenticated"""
@@ -59,6 +61,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 is_fav=Exists(user.fav_recipe.filter(pk=OuterRef("pk")))
             ).annotate(is_in_cart=Exists(user.shop_recipe.filter(pk=OuterRef("pk"))))
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return RecipeSerializer
+        return AddRecipeSerializer
 
     # def get_permissions(self):
     #     if self.action == "retrieve":
