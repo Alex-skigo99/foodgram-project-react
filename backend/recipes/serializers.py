@@ -166,3 +166,22 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return RecipeSerializer(instance, context=self.context).data
+
+
+class AddFavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe.is_favorited.through
+        fields = ("user", "recipe")
+
+
+class AddShoppingCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe.is_in_shopping_cart.through
+        fields = ("user", "recipe")
+
+
+class ShortRecipeResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ("id", "name", "image", "cooking_time")
+        read_only_fields = ("id", "name", "image", "cooking_time")

@@ -1,25 +1,29 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Exists, OuterRef
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from distutils.util import strtobool
 
 # from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, filters  # , generics, permissions
+from rest_framework import viewsets, filters, status
 from django_filters.rest_framework import (
     DjangoFilterBackend,
     AllValuesMultipleFilter,
     FilterSet,
     NumberFilter,
     TypedChoiceFilter,
-    ModelMultipleChoiceFilter,
 )
 
 from .models import Recipe, Ingredient, Tag
-from .permissions import OwnerOrReadOnly
+from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
     RecipeSerializer,
     IngredientSerializer,
     TagSerializer,
     AddRecipeSerializer,
+    AddFavoriteSerializer,
+    AddShoppingCartSerializer,
+    ShortRecipeResponseSerializer,
 )
 
 User = get_user_model()
@@ -70,10 +74,45 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return AddRecipeSerializer
 
-    # def get_permissions(self):
-    #     if self.action == "retrieve":
-    #         return (ReadOnly(),)
-    #     return super().get_permissions()
+    def fav_cart_logic(self, request, user, recipe, field_for_del, serializer):
+        if request.method == "POST":
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                ShortRecipeResponseSerializer(recipe).data,
+                status=status.HTTP_201_CREATED,
+            )
+        if not serializer.is_valid():
+            field_for_del.remove(user)
+            return Response(
+                ShortRecipeResponseSerializer(recipe).data,
+                status=status.HTTP_204_NO_CONTENT,
+            )
+        return Response(
+            {"errors": "этого рецепта нет в избранном"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @action(detail=True, methods=["post", "delete"])
+    def favorite(self, request, pk):
+        user = self.request.user
+        serializer = AddFavoriteSerializer(data={"user": user.id, "recipe": pk})
+        recipe = Recipe.objects.get(pk=pk)
+        field_for_del = recipe.is_favorited
+        return self.fav_cart_logic(request, user, recipe, field_for_del, serializer)
+
+    @action(detail=True, methods=["post", "delete"])
+    def shopping_cart(self, request, pk):
+        user = self.request.user
+        serializer = AddShoppingCartSerializer(data={"user": user.id, "recipe": pk})
+        recipe = Recipe.objects.get(pk=pk)
+        field_for_del = recipe.is_in_shopping_cart
+        return self.fav_cart_logic(request, user, recipe, field_for_del, serializer)
+
+    def get_permissions(self):
+        if self.action == "retrieve":
+            return (ReadOnly(),)
+        return super().get_permissions()
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
