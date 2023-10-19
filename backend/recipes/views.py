@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Sum
+from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from distutils.util import strtobool
 
 # from django.shortcuts import get_object_or_404
@@ -14,7 +16,7 @@ from django_filters.rest_framework import (
     TypedChoiceFilter,
 )
 
-from .models import Recipe, Ingredient, Tag
+from .models import Recipe, Ingredient, Tag, IngredientsApplied
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
     RecipeSerializer,
@@ -24,6 +26,7 @@ from .serializers import (
     AddFavoriteSerializer,
     AddShoppingCartSerializer,
     ShortRecipeResponseSerializer,
+    IngredientCartSerializer,
 )
 
 User = get_user_model()
@@ -108,6 +111,26 @@ class RecipesViewSet(viewsets.ModelViewSet):
         recipe = Recipe.objects.get(pk=pk)
         field_for_del = recipe.is_in_shopping_cart
         return self.fav_cart_logic(request, user, recipe, field_for_del, serializer)
+
+    @action(detail=False, methods=["get"], permission_classes=(IsAuthenticated,))
+    def download_shopping_cart(self, request):
+        user = self.request.user
+        recipes_in_cart = user.shop_recipe.all()
+        queryset = Ingredient.objects.filter(
+            ingredientsapplied__recipe__in=recipes_in_cart
+        ).annotate(amount=Sum("ingredientsapplied__amount"))
+        list_ing = queryset.values_list()
+        with open("temp/Ingredients.txt", "w") as file:
+            file.write("Список ингредиентов для покупки:" + "\n")
+            for ing in list_ing:
+                file.write(f"- {ing[1]} ({ing[2]}): {ing[3]}" + "\n")
+
+        with open("temp/Ingredients.txt", "r") as file:
+            response = HttpResponse(file, content_type="text/csv")
+            response[
+                "Content-Disposition"
+            ] = "attachment; filename=temp/Ingredients.txt"
+            return response
 
     def get_permissions(self):
         if self.action == "retrieve":

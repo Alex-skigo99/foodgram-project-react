@@ -155,4 +155,6 @@ backend/media/
 
 # Others
 node_modules
+temp/
+Temp/
 

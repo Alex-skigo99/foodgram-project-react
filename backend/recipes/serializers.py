@@ -185,3 +185,14 @@ class ShortRecipeResponseSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ("id", "name", "image", "cooking_time")
         read_only_fields = ("id", "name", "image", "cooking_time")
+
+
+class IngredientCartSerializer(serializers.ModelSerializer):
+    amount = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Ingredient
+        fields = ("name", "measurement_unit", "amount")
+
+    def get_amount(self, obj):
+        return obj.amount
