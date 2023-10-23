@@ -9,7 +9,7 @@ from rest_framework import serializers
 
 from .models import Recipe, Ingredient, Tag, IngredientsApplied, TagsApplied
 
-from users.serializers import CustomUserSerializer
+from users.serializers import CustomUserSerializer, ShortRecipeResponseSerializer
 
 User = get_user_model()
 
@@ -178,13 +178,6 @@ class AddShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe.is_in_shopping_cart.through
         fields = ("user", "recipe")
-
-
-class ShortRecipeResponseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = ("id", "name", "image", "cooking_time")
-        read_only_fields = ("id", "name", "image", "cooking_time")
 
 
 class IngredientCartSerializer(serializers.ModelSerializer):

@@ -1,42 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
-
-# from .models import Recipe
 
 
 User = get_user_model()
-
-
-# class Favorite(models.Model):
-#     """Избранное."""
-
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#     )
-#     recipe = models.ForeignKey(
-#         Recipe,
-#         on_delete=models.CASCADE,
-#     )
-
-#     def __str__(self):
-#         return f"{self.recipe} {self.user}"
-
-
-# class Shopping_cart(models.Model):
-#     """Список покупок."""
-
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#     )
-#     recipe = models.ForeignKey(
-#         Recipe,
-#         on_delete=models.CASCADE,
-#     )
-
-#     def __str__(self):
-#         return f"{self.recipe} {self.user}"
 
 
 class Subscription(models.Model):
@@ -48,17 +15,21 @@ class Subscription(models.Model):
         related_name="followers",
         verbose_name="Подписчик",
     )
-    following = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="followings",
+        related_name="authors",
         verbose_name="Автор",
     )
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["follower", "following"], name="follow")
+            models.UniqueConstraint(fields=["follower", "author"], name="follow")
         ]
 
+    def clean(self):
+        if self.follower == self.author:
+            raise ValidationError({"errors": "нельзя подписаться на самого себя"})
+
     def __str__(self) -> str:
-        return str(self.following)
+        return f"Follower: {str(self.follower)} / Author: {str(self.author)}"

@@ -6,10 +6,19 @@ from rest_framework.relations import SlugRelatedField, PrimaryKeyRelatedField
 from djoser.serializers import UserSerializer
 
 
+from recipes.models import Recipe
 from .models import Subscription
 
+RECIPES_LIMIT = 6
 
 User = get_user_model()
+
+
+class ShortRecipeResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ("id", "name", "image", "cooking_time")
+        read_only_fields = ("id", "name", "image", "cooking_time")
 
 
 class CustomUserSerializer(UserSerializer):
@@ -29,6 +38,9 @@ class CustomUserSerializer(UserSerializer):
         )
 
     def get_is_subscribed(self, obj):
+        user = self.context["request"].user
+        if user.is_authenticated:
+            return user.followers.filter(author=obj).exists()
         return False
 
 
@@ -53,29 +65,19 @@ class CustomUserCreateSerializer(UserSerializer):
         return data
 
 
-# class SubscriptionSerializer(CustomUserSerializer):
+class SubscriptionSerializer(CustomUserSerializer):
+    recipes = serializers.SerializerMethodField(read_only=True)
+    recipes_count = serializers.IntegerField(read_only=True, source="recipes.count")
 
+    class Meta(CustomUserSerializer.Meta):
+        fields = CustomUserSerializer.Meta.fields + ("recipes", "recipes_count")
 
-# class SubscriptionSerializer(serializers.ModelSerializer):
-#     follower = serializers.StringRelatedField(
-#         read_only=True, default=serializers.CurrentUserDefault()
-#     )
-
-#     class Meta:
-#         model = Subscription
-#         fields = ("follower", "following")
-
-#         validators = [
-#             serializers.UniqueTogetherValidator(
-#                 queryset=Subscription.objects.all(),
-#                 fields=("follower", "following"),
-#                 message="Вы уже подписаны на этого автора.",
-#             )
-#         ]
-
-#     def validate_following(self, value):
-#         if value == self.context["request"].user:
-#             raise serializers.ValidationError(
-#                 "Нельзя подписаться на самого себя."
-#             )
-#         return value
+    def get_recipes(self, obj):
+        limit = self.context["request"].query_params.get("recipes_limit")
+        if limit == None:
+            limit = RECIPES_LIMIT
+        limit = int(limit)
+        recipes = obj.recipes.all()[:limit]
+        return ShortRecipeResponseSerializer(
+            recipes, context=self.context, many=True
+        ).data
