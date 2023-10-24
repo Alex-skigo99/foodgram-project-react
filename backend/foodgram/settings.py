@@ -22,6 +22,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "users.CustomUser"
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -141,7 +142,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     "HIDE_USERS": False,
-    "LOGIN_FIELD": "email",
+    # "LOGIN_FIELD": "email",
     "SERIALIZERS": {
         "user": "users.serializers.CustomUserSerializer",
         "current_user": "users.serializers.CustomUserSerializer",
@@ -150,6 +151,6 @@ DJOSER = {
     },
     "PERMISSIONS": {
         "user_list": ["rest_framework.permissions.AllowAny"],
-        "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
+        "user": ["rest_framework.permissions.AllowAny"],
     },
 }

@@ -3,21 +3,14 @@ from django.db.models import Exists, OuterRef, Sum
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from distutils.util import strtobool
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, filters, status, mixins
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-    AllValuesMultipleFilter,
-    FilterSet,
-    NumberFilter,
-    TypedChoiceFilter,
-)
-
+from django_filters.rest_framework import DjangoFilterBackend
 from .models import Recipe, Ingredient, Tag, IngredientsApplied
 from .permissions import OwnerOrReadOnly, ReadOnly
+from .filters import IngredientsFilter, RecipeFilter
 from .serializers import (
     RecipeSerializer,
     IngredientSerializer,
@@ -31,30 +24,10 @@ from .serializers import (
 
 User = get_user_model()
 
-BOOLEAN_CHOICES = (
-    (0, "False"),
-    (1, "True"),
-)
-
-
-class RecipeFilter(FilterSet):
-    tags = AllValuesMultipleFilter(field_name="tags__slug")
-    author = NumberFilter(lookup_expr="id__exact")
-    is_favorited = TypedChoiceFilter(
-        field_name="is_fav", choices=BOOLEAN_CHOICES, coerce=strtobool
-    )
-    is_in_shopping_cart = TypedChoiceFilter(
-        field_name="is_in_cart", choices=BOOLEAN_CHOICES, coerce=strtobool
-    )
-
-    class Meta:
-        model = Recipe
-        fields = []
-
 
 class RecipesViewSet(viewsets.ModelViewSet):
     permission_classes = (OwnerOrReadOnly,)
-    filter_backends = (filters.SearchFilter, DjangoFilterBackend)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
     def get_queryset(self):
@@ -138,25 +111,31 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
 
-class IngredientsViewSet(viewsets.ReadOnlyModelViewSet, mixins.CreateModelMixin):
+class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ("^name",)
+    # permission_classes = (ReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientsFilter
 
-    def create(self, request, *args, **kwargs):
-        is_many = isinstance(request.data, list)
-        if not is_many:
-            return super(IngredientsViewSet, self).create(request, *args, **kwargs)
-        else:
-            serializer = self.get_serializer(data=request.data, many=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
-            )
+    # def create(self, request, *args, **kwargs):
+    #     is_many = isinstance(request.data, list)
+    #     if not is_many:
+    #         return super(IngredientsViewSet, self).create(request, *args, **kwargs)
+    #     else:
+    #         serializer = self.get_serializer(data=request.data, many=True)
+    #         serializer.is_valid(raise_exception=True)
+    #         self.perform_create(serializer)
+    #         headers = self.get_success_headers(serializer.data)
+    #         return Response(
+    #             serializer.data, status=status.HTTP_201_CREATED, headers=headers
+    #         )
+
+    # def get_permissions(self):
+    #     if self.action == "create":
+    #         return (IsAdminUser,)
+    #     return (ReadOnly,)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

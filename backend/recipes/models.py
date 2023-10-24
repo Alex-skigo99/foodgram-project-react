@@ -53,7 +53,7 @@ class Recipe(models.Model):
 
 
 class IngredientsApplied(models.Model):
-    inrgredient = models.ForeignKey(
+    ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
     )
@@ -63,7 +63,7 @@ class IngredientsApplied(models.Model):
     amount = models.IntegerField(verbose_name="Количество")
 
     def __str__(self):
-        return f"{self.recipe} {self.inrgredient}"
+        return f"{self.recipe} {self.ingredient}"
 
 
 class TagsApplied(models.Model):

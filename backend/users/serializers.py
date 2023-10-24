@@ -3,7 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField, PrimaryKeyRelatedField
-from djoser.serializers import UserSerializer
+from djoser.serializers import UserSerializer, UserCreateSerializer
 
 
 from recipes.models import Recipe
@@ -26,11 +26,8 @@ class CustomUserSerializer(UserSerializer):
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
-    class Meta:
-        model = User
-        fields = (
-            "email",
-            "id",
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + (
             "username",
             "first_name",
             "last_name",
@@ -44,25 +41,16 @@ class CustomUserSerializer(UserSerializer):
         return False
 
 
-class CustomUserCreateSerializer(UserSerializer):
+class CustomUserCreateSerializer(UserCreateSerializer):
     """Use in settings.DJOSER."""
 
-    class Meta:
-        model = User
-        fields = (
-            "email",
-            "id",
+    class Meta(UserCreateSerializer.Meta):
+        fields = UserCreateSerializer.Meta.fields + (
             "username",
             "first_name",
             "last_name",
-            "password",
         )
         read_only_fields = ("id",)
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        del data["password"]
-        return data
 
 
 class SubscriptionSerializer(CustomUserSerializer):

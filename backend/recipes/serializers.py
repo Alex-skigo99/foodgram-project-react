@@ -32,10 +32,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientsAppliedSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(source="inrgredient.id")
-    name = serializers.CharField(read_only=True, source="inrgredient.name")
+    id = serializers.IntegerField(source="ingredient.id")
+    name = serializers.CharField(read_only=True, source="ingredient.name")
     measurement_unit = serializers.CharField(
-        read_only=True, source="inrgredient.measurement_unit"
+        read_only=True, source="ingredient.measurement_unit"
     )
 
     class Meta:
@@ -138,7 +138,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
             amount = ingredient.pop("amount")
             current_ing = ingredient.pop("id")
             IngredientsApplied.objects.create(
-                inrgredient=current_ing, recipe=recipe, amount=amount
+                ingredient=current_ing, recipe=recipe, amount=amount
             )
         return recipe
 
@@ -160,7 +160,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
             amount = ingredient.pop("amount")
             current_ing = ingredient.pop("id")
             IngredientsApplied.objects.create(
-                inrgredient=current_ing, recipe=instance, amount=amount
+                ingredient=current_ing, recipe=instance, amount=amount
             )
         return instance
 
