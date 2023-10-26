@@ -127,6 +127,33 @@ class AddRecipeSerializer(serializers.ModelSerializer):
             "tags",
         )
 
+    def validate(self, data):
+        fields_to_valid = ["ingredients", "tags", "image"]
+        for field in fields_to_valid:
+            if not field in data:
+                raise serializers.ValidationError(f"данные не содержит поле {field}!")
+        return data
+
+    def validate_ingredients(self, value):
+        if len(value) == 0:
+            raise serializers.ValidationError("отсутствуют ингредиенты!")
+        id_list = []
+        for ing in value:
+            amount = ing["amount"]
+            if amount < 1:
+                raise serializers.ValidationError("количество меньше допустимого!")
+            id_list.append(ing["id"])
+        if len(id_list) > len(set(id_list)):
+            raise serializers.ValidationError("ингредиенты повторяются!")
+        return value
+
+    def validate_tags(self, value):
+        if len(value) == 0:
+            raise serializers.ValidationError("отсутствуют теги!")
+        if len(value) > len(set(value)):
+            raise serializers.ValidationError("теги повторяются!")
+        return value
+
     @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop("ingredients")
@@ -171,13 +198,13 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 class AddFavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe.is_favorited.through
-        fields = ("user", "recipe")
+        fields = ("customuser", "recipe")
 
 
 class AddShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe.is_in_shopping_cart.through
-        fields = ("user", "recipe")
+        fields = ("customuser", "recipe")
 
 
 class IngredientCartSerializer(serializers.ModelSerializer):

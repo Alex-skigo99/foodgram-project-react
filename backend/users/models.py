@@ -1,9 +1,11 @@
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
 
 class CustomUser(AbstractUser):
+    username_validator = UnicodeUsernameValidator()
     username = models.CharField(
         ("username"),
         max_length=150,
@@ -12,6 +14,7 @@ class CustomUser(AbstractUser):
         help_text=(
             "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
         ),
+        validators=[username_validator],
         error_messages={
             "unique": ("A user with that username already exists."),
         },

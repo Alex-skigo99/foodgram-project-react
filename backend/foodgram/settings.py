@@ -16,7 +16,9 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-8@h3+s(&()m9x#9u%8abig*&v(vq4xol(&b+n0-16t^(*^24qp"
+SECRET_KEY = (
+    "django-insecure-8@h3+s(&()m9x#9u%8abig*&v(vq4xol(&b+n0-16t^(*^24qp"
+)
 
 DEBUG = True
 
@@ -142,15 +144,13 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     "HIDE_USERS": False,
-    # "LOGIN_FIELD": "email",
     "SERIALIZERS": {
         "user": "users.serializers.CustomUserSerializer",
         "current_user": "users.serializers.CustomUserSerializer",
         "user_create": "users.serializers.CustomUserCreateSerializer",
-        # "set_password": "users.serializers.CustomSetPasswordSerializer",
     },
     "PERMISSIONS": {
         "user_list": ["rest_framework.permissions.AllowAny"],
-        "user": ["rest_framework.permissions.AllowAny"],
+        "user": ["djoser.permissions.CurrentUserOrAdminOrReadOnly"],
     },
 }

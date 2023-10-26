@@ -33,13 +33,16 @@ class Recipe(models.Model):
         related_name="recipes",
         verbose_name="Автор",
     )
-    image = models.ImageField(upload_to="recipes/", null=True, blank=True)
+    image = models.ImageField(upload_to="recipes/", null=True, blank=False)
     cooking_time = models.IntegerField(verbose_name="Время приготовления")
     ingredients = models.ManyToManyField(
-        Ingredient, through="IngredientsApplied", related_name="ing_recipes"
+        Ingredient,
+        through="IngredientsApplied",
+        related_name="ing_recipes",
+        blank=False,
     )
     tags = models.ManyToManyField(
-        Tag, through="TagsApplied", related_name="tag_recipes"
+        Tag, through="TagsApplied", related_name="tag_recipes", blank=False
     )
     is_favorited = models.ManyToManyField(
         User, db_table="Favorite", related_name="fav_recipe"
