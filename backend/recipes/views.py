@@ -1,24 +1,21 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Exists, OuterRef, Sum, Value, BooleanField
+from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Recipe, Ingredient, Tag
-from .permissions import OwnerOrReadOnly, ReadOnly
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from users.serializers import ShortRecipeResponseSerializer
+
 from .filters import IngredientsFilter, RecipeFilter
+from .models import Ingredient, Recipe, Tag
+from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
-    RecipeSerializer,
-    IngredientSerializer,
-    TagSerializer,
-    AddRecipeSerializer,
-    AddFavoriteSerializer,
-    AddShoppingCartSerializer,
-    ShortRecipeResponseSerializer,
+    AddFavoriteSerializer, AddRecipeSerializer, AddShoppingCartSerializer,
+    IngredientSerializer, RecipeSerializer, TagSerializer,
 )
 
 User = get_user_model()
@@ -133,12 +130,31 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
 
-class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
+class IngredientsViewSet(
+    viewsets.ReadOnlyModelViewSet, mixins.CreateModelMixin
+):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientsFilter
+
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)
+        if not is_many:
+            return super(IngredientsViewSet, self).create(
+                request, *args, **kwargs
+            )
+        else:
+            serializer = self.get_serializer(data=request.data, many=True)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers,
+            )
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

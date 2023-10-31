@@ -11,9 +11,7 @@ class CustomUser(AbstractUser):
         max_length=150,
         unique=True,
         blank=False,
-        help_text=(
-            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-        ),
+        help_text=("Required. 150 characters or fewer."),
         validators=[username_validator],
         error_messages={
             "unique": ("A user with that username already exists."),
@@ -50,12 +48,16 @@ class Subscription(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["follower", "author"], name="follow")
+            models.UniqueConstraint(
+                fields=["follower", "author"], name="follow"
+            )
         ]
 
     def clean(self):
         if self.follower == self.author:
-            raise ValidationError({"errors": "нельзя подписаться на самого себя"})
+            raise ValidationError(
+                {"errors": "нельзя подписаться на самого себя"}
+            )
 
     def __str__(self) -> str:
         return f"Follower: {str(self.follower)} / Author: {str(self.author)}"

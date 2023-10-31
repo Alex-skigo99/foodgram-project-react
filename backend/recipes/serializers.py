@@ -1,15 +1,13 @@
 import base64
-from django.contrib.auth import get_user_model
-from django.db import transaction
 
-# from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
+from django.db import transaction
 from rest_framework import serializers
 
+from users.serializers import CustomUserSerializer
 
-from .models import Recipe, Ingredient, Tag, IngredientsApplied, TagsApplied
-
-from users.serializers import CustomUserSerializer, ShortRecipeResponseSerializer
+from .models import Ingredient, IngredientsApplied, Recipe, Tag, TagsApplied
 
 User = get_user_model()
 
@@ -130,8 +128,10 @@ class AddRecipeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         fields_to_valid = ["ingredients", "tags", "image"]
         for field in fields_to_valid:
-            if not field in data:
-                raise serializers.ValidationError(f"данные не содержит поле {field}!")
+            if field not in data:
+                raise serializers.ValidationError(
+                    f"данные не содержит поле {field}!"
+                )
         return data
 
     def validate_ingredients(self, value):
@@ -141,7 +141,9 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         for ing in value:
             amount = ing["amount"]
             if amount < 1:
-                raise serializers.ValidationError("количество меньше допустимого!")
+                raise serializers.ValidationError(
+                    "количество меньше допустимого!"
+                )
             id_list.append(ing["id"])
         if len(id_list) > len(set(id_list)):
             raise serializers.ValidationError("ингредиенты повторяются!")
@@ -179,6 +181,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
             "cooking_time", instance.cooking_time
         )
         instance.image = validated_data.get("image", instance.image)
+        instance.save()
         instance.tags.clear()
         for tag in tags:
             TagsApplied.objects.create(tag=tag, recipe=instance)

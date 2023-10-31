@@ -1,6 +1,5 @@
-from django.db import models
 from django.contrib.auth import get_user_model
-
+from django.db import models
 
 User = get_user_model()
 
@@ -16,7 +15,9 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.TextField(verbose_name="Имя тэга", max_length=200, unique=True)
+    name = models.TextField(
+        verbose_name="Имя тэга", max_length=200, unique=True
+    )
     color = models.CharField(verbose_name="Цвет", max_length=7, unique=True)
     slug = models.SlugField(verbose_name="Тэг", unique=True)
 

@@ -1,10 +1,8 @@
 from distutils.util import strtobool
+
 from django_filters.rest_framework import (
-    AllValuesMultipleFilter,
-    FilterSet,
-    NumberFilter,
+    AllValuesMultipleFilter, CharFilter, FilterSet, NumberFilter,
     TypedChoiceFilter,
-    CharFilter,
 )
 
 from recipes.models import Ingredient, Recipe

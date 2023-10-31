@@ -1,13 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField, PrimaryKeyRelatedField
-from djoser.serializers import UserSerializer, UserCreateSerializer
-
 
 from recipes.models import Recipe
-from .models import Subscription
 
 RECIPES_LIMIT = 6
 
@@ -55,14 +50,19 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 class SubscriptionSerializer(CustomUserSerializer):
     recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.IntegerField(read_only=True, source="recipes.count")
+    recipes_count = serializers.IntegerField(
+        read_only=True, source="recipes.count"
+    )
 
     class Meta(CustomUserSerializer.Meta):
-        fields = CustomUserSerializer.Meta.fields + ("recipes", "recipes_count")
+        fields = CustomUserSerializer.Meta.fields + (
+            "recipes",
+            "recipes_count",
+        )
 
     def get_recipes(self, obj):
         limit = self.context["request"].query_params.get("recipes_limit")
-        if limit == None:
+        if limit is None:
             limit = RECIPES_LIMIT
         limit = int(limit)
         recipes = obj.recipes.all()[:limit]

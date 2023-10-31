@@ -1,15 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework import generics, permissions, views, status
 from djoser.views import UserViewSet
+from rest_framework import generics, permissions, status, views
+from rest_framework.response import Response
 
-from recipes.models import Recipe
 from .models import Subscription
-
-from .serializers import (
-    SubscriptionSerializer,
-)
+from .serializers import SubscriptionSerializer
 
 User = get_user_model()
 
@@ -44,9 +40,7 @@ class CreateDestroySubscriptionView(views.APIView):
             or author == user
         ):
             return Response(
-                {
-                    "errors": "вы уже подписаны или пытаетесь подписаться на самого себя"
-                },
+                {"errors": "Нельзя подписаться на самого себя"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         Subscription.objects.create(follower=user, author=author)

@@ -1,11 +1,6 @@
 from django.contrib import admin
-from .models import (
-    Recipe,
-    Ingredient,
-    IngredientsApplied,
-    Tag,
-    TagsApplied,
-)
+
+from .models import Ingredient, IngredientsApplied, Recipe, Tag, TagsApplied
 
 
 class IngAdmin(admin.ModelAdmin):
