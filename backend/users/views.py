@@ -25,8 +25,8 @@ class SubscriptionViewSet(generics.ListAPIView):
         user = self.request.user
         following = list(user.followers.all().values())
         following_list = []
-        for each in following:
-            following_list.append(each["author_id"])
+        for follow in following:
+            following_list.append(follow["author_id"])
         queryset = User.objects.filter(id__in=following_list)
         return queryset
 
@@ -55,9 +55,9 @@ class CreateDestroySubscriptionView(views.APIView):
     def delete(self, request, user_id):
         author = get_object_or_404(User, pk=user_id)
         user = self.request.user
-        if Subscription.objects.filter(follower=user, author=author).exists():
-            instance = Subscription.objects.get(follower=user, author=author)
-            instance.delete()
+        if Subscription.objects.filter(follower=user, author=author).delete():
+            # instance = Subscription.objects.get(follower=user, author=author)
+            # instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {"errors": "вы не подписаны на этого автора"},
