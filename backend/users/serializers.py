@@ -65,7 +65,7 @@ class SubscriptionSerializer(CustomUserSerializer):
         if limit is None:
             limit = RECIPES_LIMIT
         limit = int(limit)
-        recipes = obj.recipes.all()[:limit]
+        recipes = obj.recipes.all().order_by("-create")[:limit]
         return ShortRecipeResponseSerializer(
             recipes, context=self.context, many=True
         ).data

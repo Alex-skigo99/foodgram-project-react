@@ -14,8 +14,12 @@ from .filters import IngredientsFilter, RecipeFilter
 from .models import Ingredient, Recipe, Tag
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
-    AddFavoriteSerializer, AddRecipeSerializer, AddShoppingCartSerializer,
-    IngredientSerializer, RecipeSerializer, TagSerializer,
+    AddFavoriteSerializer,
+    AddRecipeSerializer,
+    AddShoppingCartSerializer,
+    IngredientSerializer,
+    RecipeSerializer,
+    TagSerializer,
 )
 
 User = get_user_model()
@@ -27,10 +31,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_queryset(self):
-        """Add fields is_fav & is_in_cart for authenticated"""
+        """Add fields is_fav & is_in_cart for authenticated."""
         user = self.request.user
-        queryset = Recipe.objects.select_related("author").prefetch_related(
-            "ingredients", "tags"
+        queryset = (
+            Recipe.objects.select_related("author")
+            .prefetch_related("ingredients", "tags")
+            .order_by("-created")
         )
         if user.is_authenticated:
             queryset = queryset.annotate(
@@ -54,14 +60,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     def fav_cart_logic(self, request, serializer, pk):
         user = self.request.user
-        # if not Recipe.objects.filter(pk=pk).exists():
-        #     return Response(
-        #         {"errors": "такого рецепта не существует"},
-        #         status=status.HTTP_400_BAD_REQUEST,
-        #     )
-        recipe = get_object_or_404(
-            Recipe, pk=pk
-        )  # postman test required 400 !!!!!!! it's not right, imho
+        recipe = get_object_or_404(Recipe, pk=pk)
         serializer = serializer(data={"customuser": user.id, "recipe": pk})
         if request.method == "POST":
             serializer.is_valid(raise_exception=True)
@@ -86,19 +85,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post", "delete"])
     def favorite(self, request, pk):
-        serializer = AddFavoriteSerializer
         return self.fav_cart_logic(
             request,
-            serializer,
+            AddFavoriteSerializer,
             pk,
         )
 
     @action(detail=True, methods=["post", "delete"])
     def shopping_cart(self, request, pk):
-        serializer = AddShoppingCartSerializer
         return self.fav_cart_logic(
             request,
-            serializer,
+            AddShoppingCartSerializer,
             pk,
         )
 
@@ -145,16 +142,15 @@ class IngredientsViewSet(
             return super(IngredientsViewSet, self).create(
                 request, *args, **kwargs
             )
-        else:
-            serializer = self.get_serializer(data=request.data, many=True)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
-                headers=headers,
-            )
+        serializer = self.get_serializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

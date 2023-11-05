@@ -12,6 +12,8 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
+    depends_on:
+      - db
     image: skigo99/foodgram_backend
     env_file: .env
     volumes:
@@ -23,6 +25,9 @@ services:
       - static:/frontend_static
     command: cp -r /app/build/. /frontend_static
   nginx:
+    depends_on:
+      - frontend
+      - backend
     image: nginx:1.19.3
     ports:
       - "8000:80"

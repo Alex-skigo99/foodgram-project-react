@@ -56,8 +56,6 @@ class CreateDestroySubscriptionView(views.APIView):
         author = get_object_or_404(User, pk=user_id)
         user = self.request.user
         if Subscription.objects.filter(follower=user, author=author).delete():
-            # instance = Subscription.objects.get(follower=user, author=author)
-            # instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {"errors": "вы не подписаны на этого автора"},

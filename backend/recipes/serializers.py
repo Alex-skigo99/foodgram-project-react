@@ -7,7 +7,14 @@ from rest_framework import serializers
 
 from users.serializers import CustomUserSerializer
 
-from .models import Ingredient, IngredientsApplied, Recipe, Tag, TagsApplied
+from .models import (
+    Ingredient,
+    IngredientsApplied,
+    Recipe,
+    Tag,
+    Favorite,
+    Shopping_cart,
+)
 
 User = get_user_model()
 
@@ -26,7 +33,7 @@ class Base64ImageField(serializers.ImageField):
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = "__all__"
+        fields = ("id", "name", "measurement_unit")
 
 
 class IngredientsAppliedSerializer(serializers.ModelSerializer):
@@ -54,14 +61,6 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ("id", "name", "color", "slug")
-
-
-class AddTagsSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all())
-
-    class Meta:
-        model = TagsApplied
-        fields = "id"
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -127,11 +126,14 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         fields_to_valid = ["ingredients", "tags", "image"]
+        fields_missing = []
         for field in fields_to_valid:
             if field not in data:
-                raise serializers.ValidationError(
-                    f"данные не содержит поле {field}!"
-                )
+                fields_missing.append(field)
+        if fields_missing:
+            raise serializers.ValidationError(
+                f"данные не содержат поля {fields_missing}!"
+            )
         return data
 
     def validate_ingredients(self, value):
@@ -161,8 +163,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop("ingredients")
         tags = validated_data.pop("tags")
         recipe = Recipe.objects.create(**validated_data)
-        for tag in tags:
-            TagsApplied.objects.create(tag=tag, recipe=recipe)
+        recipe.tags.set(tags)
         for ingredient in ingredients:
             amount = ingredient.pop("amount")
             current_ing = ingredient.pop("id")
@@ -182,9 +183,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         )
         instance.image = validated_data.get("image", instance.image)
         instance.save()
-        instance.tags.clear()
-        for tag in tags:
-            TagsApplied.objects.create(tag=tag, recipe=instance)
+        instance.tags.set(tags)
         instance.ingredients.clear()
         for ingredient in ingredients:
             amount = ingredient.pop("amount")
@@ -200,14 +199,26 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 
 class AddFavoriteSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Recipe.is_favorited.through
+        model = Favorite
         fields = ("customuser", "recipe")
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=("customuser", "recipe"),
+            )
+        ]
 
 
 class AddShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Recipe.is_in_shopping_cart.through
+        model = Shopping_cart
         fields = ("customuser", "recipe")
+        validators = [
+            serializers.UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=("customuser", "recipe"),
+            )
+        ]
 
 
 class IngredientCartSerializer(serializers.ModelSerializer):

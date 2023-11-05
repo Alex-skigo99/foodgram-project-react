@@ -27,7 +27,8 @@ class CustomUser(AbstractUser):
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
 
     class Meta(AbstractUser.Meta):
-        ...
+        verbose_name = "пользователь"
+        verbose_name_plural = "пользователи"
 
 
 class Subscription(models.Model):
@@ -46,18 +47,20 @@ class Subscription(models.Model):
         verbose_name="Автор",
     )
 
+    def clean(self):
+        if self.follower == self.author:
+            raise ValidationError(
+                {"errors": "нельзя подписаться на самого себя"}
+            )
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["follower", "author"], name="follow"
             )
         ]
-
-    def clean(self):
-        if self.follower == self.author:
-            raise ValidationError(
-                {"errors": "нельзя подписаться на самого себя"}
-            )
+        verbose_name = "подписка"
+        verbose_name_plural = "подписки на авторов"
 
     def __str__(self) -> str:
         return f"Follower: {str(self.follower)} / Author: {str(self.author)}"
