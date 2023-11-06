@@ -5,16 +5,10 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from rest_framework import serializers
 
-from users.serializers import CustomUserSerializer
-
-from .models import (
-    Ingredient,
-    IngredientsApplied,
-    Recipe,
-    Tag,
-    Favorite,
-    Shopping_cart,
+from recipes.models import (
+    Favorite, Ingredient, IngredientsApplied, Recipe, Shopping_cart, Tag,
 )
+from users.serializers import CustomUserSerializer
 
 User = get_user_model()
 
@@ -161,9 +155,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop("ingredients")
-        tags = validated_data.pop("tags")
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
+        recipe = super().create(validated_data)
         for ingredient in ingredients:
             amount = ingredient.pop("amount")
             current_ing = ingredient.pop("id")
@@ -175,15 +167,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop("ingredients")
-        tags = validated_data.pop("tags")
-        instance.name = validated_data.get("name", instance.name)
-        instance.text = validated_data.get("text", instance.text)
-        instance.cooking_time = validated_data.get(
-            "cooking_time", instance.cooking_time
-        )
-        instance.image = validated_data.get("image", instance.image)
-        instance.save()
-        instance.tags.set(tags)
+        super().update(instance, validated_data)
         instance.ingredients.clear()
         for ingredient in ingredients:
             amount = ingredient.pop("amount")

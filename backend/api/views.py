@@ -1,3 +1,5 @@
+from io import StringIO
+
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
@@ -8,21 +10,34 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from recipes.models import Ingredient, Recipe, Tag
 from users.serializers import ShortRecipeResponseSerializer
 
 from .filters import IngredientsFilter, RecipeFilter
-from .models import Ingredient, Recipe, Tag
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
-    AddFavoriteSerializer,
-    AddRecipeSerializer,
-    AddShoppingCartSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    TagSerializer,
+    AddFavoriteSerializer, AddRecipeSerializer, AddShoppingCartSerializer,
+    IngredientSerializer, RecipeSerializer, TagSerializer,
 )
 
 User = get_user_model()
+
+
+def shopping_cart_file(user):
+    basket = user.shop_recipe.all()
+    queryset = Ingredient.objects.filter(
+        ingredientsapplied__recipe__in=basket
+    ).annotate(amount=Sum("ingredientsapplied__amount"))
+    file_buffer = StringIO()
+    file_buffer.write("Список ингредиентов для покупки:\n")
+    queryset_list = queryset.values_list()
+    for ingredient in queryset_list:
+        file_buffer.write(
+            f"- {ingredient[1]} ({ingredient[2]}): {ingredient[3]}\n"
+        )
+    file_content = file_buffer.getvalue()
+    file_buffer.close()
+    return file_content
 
 
 class RecipesViewSet(viewsets.ModelViewSet):
@@ -104,22 +119,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = self.request.user
-        recipes_in_cart = user.shop_recipe.all()
-        queryset = Ingredient.objects.filter(
-            ingredientsapplied__recipe__in=recipes_in_cart
-        ).annotate(amount=Sum("ingredientsapplied__amount"))
-        list_ing = queryset.values_list()
-        with open("temp/Ingredients.txt", "w") as file:
-            file.write("Список ингредиентов для покупки:" + "\n")
-            for ing in list_ing:
-                file.write(f"- {ing[1]} ({ing[2]}): {ing[3]}" + "\n")
-
-        with open("temp/Ingredients.txt", "r") as file:
-            response = HttpResponse(file, content_type="text/csv")
-            response[
-                "Content-Disposition"
-            ] = "attachment; filename=temp/Ingredients.txt"
-            return response
+        response = HttpResponse(
+            shopping_cart_file(user), content_type="text/plain"
+        )
+        response[
+            "Content-Disposition"
+        ] = "attachment; filename='ingredients.txt'"
+        return response
 
     def get_permissions(self):
         if self.action == "retrieve":

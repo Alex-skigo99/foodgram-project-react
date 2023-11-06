@@ -30,6 +30,9 @@ class CustomUser(AbstractUser):
         verbose_name = "пользователь"
         verbose_name_plural = "пользователи"
 
+    def __str__(self) -> str:
+        return super().__str__()
+
 
 class Subscription(models.Model):
     """Подписка на автора."""

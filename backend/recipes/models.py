@@ -1,5 +1,5 @@
-from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db import models
 
 User = get_user_model()
@@ -90,7 +90,6 @@ class IngredientsApplied(models.Model):
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name="recipes_of_ingredient",
         verbose_name="Ингредиент",
     )
     recipe = models.ForeignKey(
