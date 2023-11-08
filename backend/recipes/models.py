@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 User = get_user_model()
@@ -46,34 +46,37 @@ class Recipe(models.Model):
     image = models.ImageField(upload_to="recipes/", null=True, blank=False)
     cooking_time = models.PositiveSmallIntegerField(
         verbose_name="Время приготовления",
-        validators=[MinValueValidator(1, "значение должно быть 1 - 32767")],
-        help_text="значение должно быть 1 - 32767",
+        validators=[
+            MinValueValidator(1, "значение должно быть 1 - 9999"),
+            MaxValueValidator(9999, "значение должно быть 1 - 9999"),
+        ],
+        help_text="значение должно быть 1 - 9999",
     )
     ingredients = models.ManyToManyField(
         Ingredient,
         through="IngredientsApplied",
-        related_name="ing_recipes",
+        related_name="recipes",
         verbose_name="Ингредиенты",
         blank=False,
     )
     tags = models.ManyToManyField(
         Tag,
-        related_name="tag_recipes",
+        related_name="recipes",
         blank=False,
         verbose_name="Теги",
     )
-    is_favorited = models.ManyToManyField(
-        User,
-        through="Favorite",
-        related_name="fav_recipe",
-        verbose_name="В избранном",
-    )
-    is_in_shopping_cart = models.ManyToManyField(
-        User,
-        through="Shopping_cart",
-        related_name="shop_recipe",
-        verbose_name="В корзине",
-    )
+    # is_favorited = models.ManyToManyField(
+    #     User,
+    #     through="Favorite",
+    #     related_name="fav_recipe",
+    #     verbose_name="В избранном",
+    # )
+    # is_in_shopping_cart = models.ManyToManyField(
+    #     User,
+    #     through="Shopping_cart",
+    #     related_name="shop_recipe",
+    #     verbose_name="В корзине",
+    # )
     created = models.DateTimeField(
         verbose_name="Дата создания", auto_now_add=True, db_index=True
     )
@@ -100,8 +103,11 @@ class IngredientsApplied(models.Model):
     )
     amount = models.SmallIntegerField(
         verbose_name="Количество",
-        validators=[MinValueValidator(1, "значение должно быть 1 - 32767")],
-        help_text="значение должно быть 1 - 32767",
+        validators=[
+            MinValueValidator(1, "значение должно быть 1 - 9999"),
+            MaxValueValidator(9999, "значение должно быть 1 - 9999"),
+        ],
+        help_text="значение должно быть 1 - 9999",
     )
 
     class Meta:
@@ -116,10 +122,14 @@ class Favorite(models.Model):
     customuser = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name="my_favorite",
+        verbose_name="пользователь",
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name="in_favorites",
+        verbose_name="рецепт",
     )
 
     class Meta:
@@ -139,10 +149,14 @@ class Shopping_cart(models.Model):
     customuser = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
+        related_name="my_shopping_cart",
+        verbose_name="пользователь",
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name="in_shopping_carts",
+        verbose_name="рецепт",
     )
 
     class Meta:

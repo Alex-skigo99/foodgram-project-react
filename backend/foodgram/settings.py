@@ -3,11 +3,17 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'localhost')
+SECRET_KEY = (
+    "django-insecure-8@h3+s(&()m9x#9u%8abig*&v(vq4xol(&b+n0-16t^(*^24qp"
+)
+DEBUG = True
+ALLOWED_HOSTS = []
 
-DEBUG = os.getenv('DEBAG', 'False') == 'True'
+# SECRET_KEY = os.getenv("SECRET_KEY", "localhost")
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+# DEBUG = os.getenv("DEBAG", "False") == "True"
+
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 AUTH_USER_MODEL = "users.CustomUser"
 
@@ -66,13 +72,13 @@ if DEBUG:
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('POSTGRES_DB', 'django'),
-            'USER': os.getenv('POSTGRES_USER', 'django'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', ''),
-            'PORT': os.getenv('DB_PORT', 5432),
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("POSTGRES_DB", "django"),
+            "USER": os.getenv("POSTGRES_USER", "django"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", ""),
+            "PORT": os.getenv("DB_PORT", 5432),
         }
     }
 
@@ -108,7 +114,11 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "collected_static"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = "/media/"
+
+if DEBUG:
+    MEDIA_ROOT = BASE_DIR / "media"
+else:
+    MEDIA_ROOT = "/media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -126,9 +136,9 @@ REST_FRAMEWORK = {
 DJOSER = {
     "HIDE_USERS": False,
     "SERIALIZERS": {
-        "user": "users.serializers.CustomUserSerializer",
-        "current_user": "users.serializers.CustomUserSerializer",
-        "user_create": "users.serializers.CustomUserCreateSerializer",
+        "user": "api.serializers.CustomUserSerializer",
+        "current_user": "api.serializers.CustomUserSerializer",
+        "user_create": "api.serializers.CustomUserCreateSerializer",
     },
     "PERMISSIONS": {
         "user_list": ["rest_framework.permissions.AllowAny"],

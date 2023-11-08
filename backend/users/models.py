@@ -50,12 +50,6 @@ class Subscription(models.Model):
         verbose_name="Автор",
     )
 
-    def clean(self):
-        if self.follower == self.author:
-            raise ValidationError(
-                {"errors": "нельзя подписаться на самого себя"}
-            )
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -67,3 +61,9 @@ class Subscription(models.Model):
 
     def __str__(self) -> str:
         return f"Follower: {str(self.follower)} / Author: {str(self.author)}"
+
+    def clean(self):
+        if self.follower == self.author:
+            raise ValidationError(
+                {"errors": "нельзя подписаться на самого себя"}
+            )

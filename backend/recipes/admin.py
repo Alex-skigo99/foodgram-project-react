@@ -1,7 +1,12 @@
 from django.contrib import admin
 
 from .models import (
-    Favorite, Ingredient, IngredientsApplied, Recipe, Shopping_cart, Tag,
+    Favorite,
+    Ingredient,
+    IngredientsApplied,
+    Recipe,
+    Shopping_cart,
+    Tag,
 )
 
 
@@ -28,6 +33,10 @@ class IngredientsAppliedAdmin(admin.ModelAdmin):
         "amount",
     )
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("ingredient", "recipe")
+
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
@@ -48,8 +57,16 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ("pk", "customuser", "recipe")
     list_filter = ("customuser",)
 
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("customuser", "recipe")
+
 
 @admin.register(Shopping_cart)
 class ShoppingCartAdmin(admin.ModelAdmin):
     list_display = ("pk", "customuser", "recipe")
     list_filter = ("customuser",)
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset.select_related("customuser", "recipe")

@@ -1,30 +1,45 @@
 from io import StringIO
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
+from django.db.models import BooleanField, Count, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import mixins, status, viewsets
+from djoser.views import UserViewSet
+from rest_framework import (
+    generics,
+    mixins,
+    permissions,
+    status,
+    views,
+    viewsets,
+)
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag
-from users.serializers import ShortRecipeResponseSerializer
+from recipes.models import Ingredient, Recipe, Tag, Favorite, Shopping_cart
+from users.models import Subscription
 
 from .filters import IngredientsFilter, RecipeFilter
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
-    AddFavoriteSerializer, AddRecipeSerializer, AddShoppingCartSerializer,
-    IngredientSerializer, RecipeSerializer, TagSerializer,
+    AddFavoriteSerializer,
+    AddRecipeSerializer,
+    AddShoppingCartSerializer,
+    IngredientSerializer,
+    RecipeSerializer,
+    ShortRecipeResponseSerializer,
+    SubscriptionSerializer,
+    TagSerializer,
 )
 
 User = get_user_model()
 
 
 def shopping_cart_file(user):
-    basket = user.shop_recipe.all()
+    shopping_cart = Shopping_cart.objects.filter(customuser=user)
+    basket = Recipe.objects.filter(in_shopping_carts__in=shopping_cart)
     queryset = Ingredient.objects.filter(
         ingredientsapplied__recipe__in=basket
     ).annotate(amount=Sum("ingredientsapplied__amount"))
@@ -55,9 +70,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
         )
         if user.is_authenticated:
             queryset = queryset.annotate(
-                is_fav=Exists(user.fav_recipe.filter(pk=OuterRef("pk")))
+                is_fav=Exists(
+                    Favorite.objects.filter(
+                        customuser=user, recipe__pk=OuterRef("pk")
+                    )
+                )
             ).annotate(
-                is_in_cart=Exists(user.shop_recipe.filter(pk=OuterRef("pk")))
+                is_in_cart=Exists(
+                    Shopping_cart.objects.filter(
+                        customuser=user, recipe__pk=OuterRef("pk")
+                    )
+                )
             )
         else:
             queryset = queryset.annotate(
@@ -86,9 +109,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         if not serializer.is_valid():
             if self.action == "favorite":
-                recipe.is_favorited.remove(user)
+                Favorite.objects.filter(
+                    customuser=user, recipe=recipe
+                ).delete()
             elif self.action == "shopping_cart":
-                recipe.is_in_shopping_cart.remove(user)
+                Shopping_cart.objects.filter(
+                    customuser=user, recipe=recipe
+                ).delete()
             return Response(
                 ShortRecipeResponseSerializer(recipe).data,
                 status=status.HTTP_204_NO_CONTENT,
@@ -163,3 +190,60 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
+
+
+class CustomUserViewSet(UserViewSet):
+    def get_permissions(self):
+        if self.action == "me" and self.request.user.is_anonymous:
+            self.permission_classes = [permissions.IsAuthenticated]
+        return super().get_permissions()
+
+
+class SubscriptionViewSet(generics.ListAPIView):
+    serializer_class = SubscriptionSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        following = list(user.followers.all().values())
+        following_list = []
+        for follow in following:
+            following_list.append(follow["author_id"])
+        queryset = User.objects.filter(id__in=following_list)
+        return queryset
+
+
+class CreateDestroySubscriptionView(views.APIView):
+    def post(self, request, user_id):
+        author = get_object_or_404(User, pk=user_id)
+        user = self.request.user
+        if (
+            Subscription.objects.filter(follower=user, author=author).exists()
+            or author == user
+        ):
+            return Response(
+                {"errors": "Нельзя подписаться на самого себя"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        Subscription.objects.create(follower=user, author=author)
+        context = {}
+        context["request"] = request
+        serializer = SubscriptionSerializer(instance=author, context=context)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def delete(self, request, user_id):
+        user = self.request.user
+        if (
+            Subscription.objects.filter(
+                follower=user, author__id=user_id
+            ).delete()[0]
+            > 0
+        ):
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"errors": "вы не подписаны на этого автора"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
