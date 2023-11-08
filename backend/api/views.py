@@ -18,7 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag, Favorite, Shopping_cart
+from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
 from users.models import Subscription
 
 from .filters import IngredientsFilter, RecipeFilter
@@ -38,7 +38,7 @@ User = get_user_model()
 
 
 def shopping_cart_file(user):
-    shopping_cart = Shopping_cart.objects.filter(customuser=user)
+    shopping_cart = ShoppingCart.objects.filter(user=user)
     basket = Recipe.objects.filter(in_shopping_carts__in=shopping_cart)
     queryset = Ingredient.objects.filter(
         ingredientsapplied__recipe__in=basket
@@ -72,13 +72,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
             queryset = queryset.annotate(
                 is_fav=Exists(
                     Favorite.objects.filter(
-                        customuser=user, recipe__pk=OuterRef("pk")
+                        user=user, recipe__pk=OuterRef("pk")
                     )
                 )
             ).annotate(
                 is_in_cart=Exists(
-                    Shopping_cart.objects.filter(
-                        customuser=user, recipe__pk=OuterRef("pk")
+                    ShoppingCart.objects.filter(
+                        user=user, recipe__pk=OuterRef("pk")
                     )
                 )
             )
@@ -99,7 +99,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def fav_cart_logic(self, request, serializer, pk):
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = serializer(data={"customuser": user.id, "recipe": pk})
+        serializer = serializer(data={"user": user.id, "recipe": pk})
         if request.method == "POST":
             serializer.is_valid(raise_exception=True)
             serializer.save()
@@ -109,13 +109,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
         if not serializer.is_valid():
             if self.action == "favorite":
-                Favorite.objects.filter(
-                    customuser=user, recipe=recipe
-                ).delete()
+                Favorite.objects.filter(user=user, recipe=recipe).delete()
             elif self.action == "shopping_cart":
-                Shopping_cart.objects.filter(
-                    customuser=user, recipe=recipe
-                ).delete()
+                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
             return Response(
                 ShortRecipeResponseSerializer(recipe).data,
                 status=status.HTTP_204_NO_CONTENT,

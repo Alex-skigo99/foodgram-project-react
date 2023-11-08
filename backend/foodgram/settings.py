@@ -3,17 +3,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = (
-    "django-insecure-8@h3+s(&()m9x#9u%8abig*&v(vq4xol(&b+n0-16t^(*^24qp"
-)
-DEBUG = True
-ALLOWED_HOSTS = []
+SECRET_KEY = os.getenv("SECRET_KEY", "localhost")
 
-# SECRET_KEY = os.getenv("SECRET_KEY", "localhost")
+DEBUG = os.getenv("DEBAG", "False") == "True"
 
-# DEBUG = os.getenv("DEBAG", "False") == "True"
-
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 AUTH_USER_MODEL = "users.CustomUser"
 

@@ -5,7 +5,7 @@ from .models import (
     Ingredient,
     IngredientsApplied,
     Recipe,
-    Shopping_cart,
+    ShoppingCart,
     Tag,
 )
 
@@ -54,19 +54,19 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
-    list_display = ("pk", "customuser", "recipe")
-    list_filter = ("customuser",)
+    list_display = ("pk", "user", "recipe")
+    list_filter = ("user",)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related("customuser", "recipe")
+        return queryset.select_related("user", "recipe")
 
 
-@admin.register(Shopping_cart)
+@admin.register(ShoppingCart)
 class ShoppingCartAdmin(admin.ModelAdmin):
-    list_display = ("pk", "customuser", "recipe")
-    list_filter = ("customuser",)
+    list_display = ("pk", "user", "recipe")
+    list_filter = ("user",)
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related("customuser", "recipe")
+        return queryset.select_related("user", "recipe")

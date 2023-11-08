@@ -11,7 +11,7 @@ from recipes.models import (
     Ingredient,
     IngredientsApplied,
     Recipe,
-    Shopping_cart,
+    ShoppingCart,
     Tag,
 )
 
@@ -210,23 +210,23 @@ class AddRecipeSerializer(serializers.ModelSerializer):
 class AddFavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
-        fields = ("customuser", "recipe")
+        fields = ("user", "recipe")
         validators = [
             serializers.UniqueTogetherValidator(
                 queryset=Favorite.objects.all(),
-                fields=("customuser", "recipe"),
+                fields=("user", "recipe"),
             )
         ]
 
 
 class AddShoppingCartSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Shopping_cart
-        fields = ("customuser", "recipe")
+        model = ShoppingCart
+        fields = ("user", "recipe")
         validators = [
             serializers.UniqueTogetherValidator(
-                queryset=Shopping_cart.objects.all(),
-                fields=("customuser", "recipe"),
+                queryset=ShoppingCart.objects.all(),
+                fields=("user", "recipe"),
             )
         ]
 

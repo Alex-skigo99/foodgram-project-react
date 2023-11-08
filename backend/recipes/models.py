@@ -65,18 +65,6 @@ class Recipe(models.Model):
         blank=False,
         verbose_name="Теги",
     )
-    # is_favorited = models.ManyToManyField(
-    #     User,
-    #     through="Favorite",
-    #     related_name="fav_recipe",
-    #     verbose_name="В избранном",
-    # )
-    # is_in_shopping_cart = models.ManyToManyField(
-    #     User,
-    #     through="Shopping_cart",
-    #     related_name="shop_recipe",
-    #     verbose_name="В корзине",
-    # )
     created = models.DateTimeField(
         verbose_name="Дата создания", auto_now_add=True, db_index=True
     )
@@ -119,7 +107,7 @@ class IngredientsApplied(models.Model):
 
 
 class Favorite(models.Model):
-    customuser = models.ForeignKey(
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="my_favorite",
@@ -135,18 +123,18 @@ class Favorite(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["customuser", "recipe"], name="favorite_constraints"
+                fields=["user", "recipe"], name="favorite_constraints"
             )
         ]
         verbose_name = "Избранный рецепт"
         verbose_name_plural = "Избранные рецепты"
 
     def __str__(self):
-        return f"{self.customuser} {self.recipe}"
+        return f"{self.user} {self.recipe}"
 
 
-class Shopping_cart(models.Model):
-    customuser = models.ForeignKey(
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="my_shopping_cart",
@@ -162,11 +150,11 @@ class Shopping_cart(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["customuser", "recipe"], name="cart_constraints"
+                fields=["user", "recipe"], name="cart_constraints"
             )
         ]
         verbose_name = "Рецепт в корзине"
         verbose_name_plural = "Рецепты в корзинах"
 
     def __str__(self):
-        return f"{self.customuser} {self.recipe}"
+        return f"{self.user} {self.recipe}"
