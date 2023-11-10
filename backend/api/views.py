@@ -1,7 +1,7 @@
 from io import StringIO
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
+from django.db.models import BooleanField, Count, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,7 +18,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Tag, Favorite, ShoppingCart
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription
 
 from .filters import IngredientsFilter, RecipeFilter
@@ -96,7 +96,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipeSerializer
         return AddRecipeSerializer
 
-    def fav_cart_logic(self, request, serializer, pk):
+    def action_favorite_shopping_cart(self, request, serializer, pk):
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
         serializer = serializer(data={"user": user.id, "recipe": pk})
@@ -107,23 +107,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 ShortRecipeResponseSerializer(recipe).data,
                 status=status.HTTP_201_CREATED,
             )
-        if not serializer.is_valid():
-            if self.action == "favorite":
-                Favorite.objects.filter(user=user, recipe=recipe).delete()
-            elif self.action == "shopping_cart":
-                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()
-            return Response(
-                ShortRecipeResponseSerializer(recipe).data,
-                status=status.HTTP_204_NO_CONTENT,
-            )
+        if self.action == "favorite":
+            if (
+                Favorite.objects.filter(user=user, recipe=recipe).delete()[0]
+                == 0
+            ):
+                return Response(
+                    {"error": "Этого рецепта нет в избранном"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        elif self.action == "shopping_cart":
+            if (
+                ShoppingCart.objects.filter(user=user, recipe=recipe).delete()[
+                    0
+                ]
+                == 0
+            ):
+                return Response(
+                    {"error": "Этого рецепта нет в корзине"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         return Response(
-            {"error": "нельзя удалить отсутствующие в избранном рецепт"},
-            status=status.HTTP_400_BAD_REQUEST,
+            ShortRecipeResponseSerializer(recipe).data,
+            status=status.HTTP_204_NO_CONTENT,
         )
 
     @action(detail=True, methods=["post", "delete"])
     def favorite(self, request, pk):
-        return self.fav_cart_logic(
+        return self.action_favorite_shopping_cart(
             request,
             AddFavoriteSerializer,
             pk,
@@ -131,7 +142,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post", "delete"])
     def shopping_cart(self, request, pk):
-        return self.fav_cart_logic(
+        return self.action_favorite_shopping_cart(
             request,
             AddShoppingCartSerializer,
             pk,
@@ -205,7 +216,9 @@ class SubscriptionViewSet(generics.ListAPIView):
         following_list = []
         for follow in following:
             following_list.append(follow["author_id"])
-        queryset = User.objects.filter(id__in=following_list)
+        queryset = User.objects.filter(id__in=following_list).annotate(
+            recipes_count=Count("recipes")
+        )
         return queryset
 
 
@@ -224,7 +237,14 @@ class CreateDestroySubscriptionView(views.APIView):
         Subscription.objects.create(follower=user, author=author)
         context = {}
         context["request"] = request
-        serializer = SubscriptionSerializer(instance=author, context=context)
+        author_with_count = (
+            User.objects.filter(pk=user_id)
+            .annotate(recipes_count=Count("recipes"))
+            .first()
+        )
+        serializer = SubscriptionSerializer(
+            instance=author_with_count, context=context
+        )
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED,

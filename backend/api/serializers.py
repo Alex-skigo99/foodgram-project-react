@@ -7,12 +7,7 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
 from recipes.models import (
-    Favorite,
-    Ingredient,
-    IngredientsApplied,
-    Recipe,
-    ShoppingCart,
-    Tag,
+    Favorite, Ingredient, IngredientsApplied, Recipe, ShoppingCart, Tag,
 )
 
 User = get_user_model()
@@ -263,7 +258,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 class SubscriptionSerializer(CustomUserSerializer):
     recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
+    recipes_count = serializers.IntegerField(read_only=True)
 
     class Meta(CustomUserSerializer.Meta):
         fields = CustomUserSerializer.Meta.fields + (
@@ -280,6 +275,3 @@ class SubscriptionSerializer(CustomUserSerializer):
         return ShortRecipeResponseSerializer(
             recipes, context=self.context, many=True
         ).data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
