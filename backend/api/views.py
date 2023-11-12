@@ -6,32 +6,21 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework import (
-    generics,
-    mixins,
-    permissions,
-    status,
-    views,
-    viewsets,
+    generics, mixins, permissions, status, views, viewsets,
 )
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import Subscription
 
 from .filters import IngredientsFilter, RecipeFilter
 from .permissions import OwnerOrReadOnly, ReadOnly
 from .serializers import (
-    AddFavoriteSerializer,
-    AddRecipeSerializer,
-    AddShoppingCartSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    ShortRecipeResponseSerializer,
-    SubscriptionSerializer,
-    TagSerializer,
+    AddFavoriteSerializer, AddRecipeSerializer, AddShoppingCartSerializer,
+    IngredientSerializer, RecipeSerializer, ShortRecipeResponseSerializer,
+    SubscriptionSerializer, TagSerializer,
 )
 
 User = get_user_model()

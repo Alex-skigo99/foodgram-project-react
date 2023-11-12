@@ -4,11 +4,10 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import serializers
-
 from recipes.models import (
     Favorite, Ingredient, IngredientsApplied, Recipe, ShoppingCart, Tag,
 )
+from rest_framework import serializers
 
 User = get_user_model()
 
@@ -126,7 +125,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         child=serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all())
     )
     cooking_time = serializers.IntegerField(min_value=1)
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(required=True, allow_null=True)
 
     class Meta:
         model = Recipe
@@ -141,7 +140,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        fields_to_valid = ["ingredients", "tags", "image"]
+        fields_to_valid = ["ingredients", "tags"]
         fields_missing = []
         for field in fields_to_valid:
             if field not in data:

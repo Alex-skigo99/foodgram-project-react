@@ -4,7 +4,6 @@ from django_filters.rest_framework import (
     AllValuesMultipleFilter, CharFilter, FilterSet, NumberFilter,
     TypedChoiceFilter,
 )
-
 from recipes.models import Ingredient, Recipe
 
 BOOLEAN_CHOICES = (

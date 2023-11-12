@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
@@ -34,17 +35,20 @@ class CustomUser(AbstractUser):
         return super().__str__()
 
 
+User = get_user_model()
+
+
 class Subscription(models.Model):
     """Подписка на автора."""
 
     follower = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name="followers",
         verbose_name="Подписчик",
     )
     author = models.ForeignKey(
-        CustomUser,
+        User,
         on_delete=models.CASCADE,
         related_name="authors",
         verbose_name="Автор",
