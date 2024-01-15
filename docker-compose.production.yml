@@ -1,5 +1,5 @@
 version: '3.3'
-
+#for GCloudVM
 volumes:
   pg_data_3:
   static:
