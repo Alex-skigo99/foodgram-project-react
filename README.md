@@ -76,7 +76,7 @@ Docker Compose
 
 158.160.27.248
 
-https://skigo.hopto.org
+https://sashsfoodgram.hopto.org
 
 admin:
 
