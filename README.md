@@ -74,12 +74,4 @@ Docker Compose
 
 ## Production
 
-158.160.27.248
-
-https://skigo.hopto.org
-
-admin:
-
-log: skigo99@yandex.ru
-
-pass: strong_admin
+https://sashsfoodgram.hopto.org
