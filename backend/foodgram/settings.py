@@ -9,6 +9,8 @@ DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
+HTTP_HOST = os.getenv("HTTP_HOST", "http://127.0.0.1/")
+
 AUTH_USER_MODEL = "users.CustomUser"
 
 INSTALLED_APPS = [

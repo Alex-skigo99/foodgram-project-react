@@ -5,9 +5,16 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from recipes.models import (
-    Favorite, Ingredient, IngredientsApplied, Recipe, ShoppingCart, Tag,
+    Favorite,
+    Ingredient,
+    IngredientsApplied,
+    Recipe,
+    ShoppingCart,
+    Tag,
 )
 from rest_framework import serializers
+
+from foodgram.settings import HTTP_HOST
 
 User = get_user_model()
 
@@ -102,7 +109,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
-            return obj.image.url
+            return HTTP_HOST + "/".join(obj.image.url.split("/")[3:])
         return None
 
     def get_is_favorited(self, obj):
@@ -158,9 +165,7 @@ class AddRecipeSerializer(serializers.ModelSerializer):
         for ingredient in value:
             amount = ingredient["amount"]
             if amount < 1:
-                raise serializers.ValidationError(
-                    "количество меньше допустимого!"
-                )
+                raise serializers.ValidationError("количество меньше допустимого!")
             id_list.append(ingredient["id"])
         if len(id_list) > len(set(id_list)):
             raise serializers.ValidationError("ингредиенты повторяются!")
