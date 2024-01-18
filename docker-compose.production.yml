@@ -1,5 +1,5 @@
 version: '3.3'
-#for GCloudVM v2
+#for GCloudVM v3
 
 volumes:
   pg_data_3:
