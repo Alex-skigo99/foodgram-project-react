@@ -110,7 +110,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         """get new url."""
         if obj.image:
-            # return HTTP_HOST + "/".join(obj.image.url.split("/")[3:])
             return obj.image.url
         return None
 

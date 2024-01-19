@@ -1,10 +1,13 @@
 from distutils.util import strtobool
 
 from django_filters.rest_framework import (
-    AllValuesMultipleFilter, CharFilter, FilterSet, NumberFilter,
+    AllValuesMultipleFilter,
+    CharFilter,
+    FilterSet,
+    NumberFilter,
     TypedChoiceFilter,
 )
-from recipes.models import Ingredient, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 
 BOOLEAN_CHOICES = (
     (0, "False"),
@@ -13,7 +16,10 @@ BOOLEAN_CHOICES = (
 
 
 class RecipeFilter(FilterSet):
-    tags = AllValuesMultipleFilter(field_name="tags__slug")
+    # tags = AllValuesMultipleFilter(field_name="tags__slug")
+    tags = TypedChoiceFilter(
+        choises=Tag.objects.values_list("slug", "slug"), coerse=str
+    )
     author = NumberFilter(lookup_expr="id__exact")
     is_favorited = TypedChoiceFilter(
         field_name="is_fav", choices=BOOLEAN_CHOICES, coerce=strtobool
