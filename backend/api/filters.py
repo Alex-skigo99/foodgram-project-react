@@ -1,7 +1,7 @@
 from distutils.util import strtobool
 
 from django_filters.rest_framework import (
-    AllValuesMultipleFilter,
+    ModelMultipleChoiceFilter,
     CharFilter,
     FilterSet,
     NumberFilter,
@@ -17,8 +17,11 @@ BOOLEAN_CHOICES = (
 
 class RecipeFilter(FilterSet):
     # tags = AllValuesMultipleFilter(field_name="tags__slug")
-    tags = TypedChoiceFilter(
-        choises=Tag.objects.values_list("slug", "slug"), coerse=str
+    tags = ModelMultipleChoiceFilter(
+        field_name="tag__slug",
+        to_field_name="slug",
+        lookup_type="in",
+        queryset=Tag.objects.all(),
     )
     author = NumberFilter(lookup_expr="id__exact")
     is_favorited = TypedChoiceFilter(
