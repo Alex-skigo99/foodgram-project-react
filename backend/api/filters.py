@@ -17,7 +17,9 @@ BOOLEAN_CHOICES = (
 
 class RecipeFilter(FilterSet):
     # tags = AllValuesMultipleFilter(field_name="tags__slug")
-    tags = ModelMultipleChoiceFilter(queryset=Tag.objects.all(), field_name="slug")
+    tags = ModelMultipleChoiceFilter(
+        queryset=Tag.objects.all(), field_name="tags__slug", to_field_name="slug"
+    )
     author = NumberFilter(lookup_expr="id__exact")
     is_favorited = TypedChoiceFilter(
         field_name="is_fav", choices=BOOLEAN_CHOICES, coerce=strtobool
