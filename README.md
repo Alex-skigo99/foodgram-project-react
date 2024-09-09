@@ -1,7 +1,8 @@
 
-# Foodgram - продуктовый помощник
+# Foodgram - The Food Assistant
 
-Проект продуктовый помощник предназначен для хранения рецептов приготовления различных блюд. Он позволяет регистрировать пользователей, создавать рецепты, сохранять рецепты в избранное, подписываться на пользователей, формировать корзину продуктов.
+The Food Assistant project is designed to store recipes for preparing various dishes. It allows you to register users, create recipes, save recipes to favorites, subscribe to users, and create a grocery basket.
+
 ## Run Locally
 
 Clone the project
@@ -74,4 +75,4 @@ Docker Compose
 
 ## Production
 
-https://sashsfoodgram.hopto.org
+
